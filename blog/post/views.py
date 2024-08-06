@@ -1,7 +1,6 @@
 import json
 
 from django.http import HttpRequest
-
 from user.auth.auth_mixin import JWTRequiredView
 from response.validator import ResponseValidator
 from response.exceptions import (
@@ -15,42 +14,41 @@ from .validator import PostValidator
 from .selectors.post_selector import get_following_post_by_page
 
 
-def json_api(func):
-    def wraaper(*args, **kwargs):
-        response = ResponseValidator(message="success", status=200)
-        status, data = func(*args, **kwargs)
-        response.status = status
-        response.data = data
-        return response
+# def json_api(func):
+#     def wraaper(*args, **kwargs):
+#         response = ResponseValidator(message="success", status=200)
+#         status, data = func(*args, **kwargs)
+#         response.status = status
+#         response.data = data
+#         return response
 
-    return wraaper
+#     return wraaper
 
 
 class PostView(JWTRequiredView):
-    @json_api
-    def get(self, request: HttpRequest, post_id: int) -> tuple[int, dict]:
+    def get(self, request: HttpRequest, post_id: int) -> ResponseValidator:
         try:
             post = Post.objects.get(id=post_id)
-            return 200, post.to_dict()
+            response = ResponseValidator.success(data=post.to_dict())
+            return response
 
         except Post.DoesNotExist:
             raise NotFoundException
 
-    @json_api
-    def post(self, request: HttpRequest) -> tuple[int, dict]:
+    def post(self, request: HttpRequest) -> ResponseValidator:
         try:
             body = json.loads(request.body)
             body.update({"author_id": self.payload.id})  # update user id
 
-            post_data = PostValidator(**body)
-            post = Post.objects.create(**post_data.model_dump())
-            return 201, post.to_dict()
+            post_data = PostValidator(**body).model_dump()
+            post = Post.objects.create(**post_data)
+            response = ResponseValidator.created(data=post.to_dict())
+            return response
 
         except (json.JSONDecodeError, ValueError):
             raise UnProcessableException
 
-    @json_api
-    def put(self, request: HttpRequest, post_id: int) -> tuple[int, dict]:
+    def put(self, request: HttpRequest, post_id: int) -> ResponseValidator:
         try:
             post = Post.objects.get(id=post_id)
             if self.payload.id != post.author_id:
@@ -59,34 +57,35 @@ class PostView(JWTRequiredView):
             body = json.loads(request.body)
             body.update({"author_id": self.payload.id})  # update user id
 
-            post_data = PostValidator(**body)
-            Post.objects.filter(id=post_id).update(**post_data.model_dump())
-            return 200, post_data.model_dump()
+            post_data = PostValidator(**body).model_dump()
+            Post.objects.filter(id=post_id).update(**post_data)
+            response = ResponseValidator.created(data=post_data)
+            return response
 
         except Post.DoesNotExist:
             raise NotFoundException
 
-    @json_api
-    def delete(self, request: HttpRequest, post_id: int):
+    def delete(self, request: HttpRequest, post_id: int) -> ResponseValidator:
         try:
             post = Post.objects.get(id=post_id)
             if self.payload.id != post.author_id:
                 raise UnAuthorizedException
 
             post = post.delete()
-            return 200, post
+            response = ResponseValidator.success(message="deleted", data=None)
+            return response
 
         except Post.DoesNotExist:
             raise NotFoundException
 
 
 class PostListView(JWTRequiredView):
-    @json_api
-    def get(self, request: HttpRequest) -> tuple[int, dict]:
+    def get(self, request: HttpRequest) -> ResponseValidator:
         try:
             page_num = int(request.GET["page"])
             data = get_following_post_by_page(self.payload.id, page_num)
-            return 200, data
+            response = ResponseValidator.success(data=data)
+            return response
 
         except ValueError:
             raise UnProcessableException
