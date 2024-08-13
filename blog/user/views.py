@@ -1,59 +1,52 @@
-import json
-from django.http import HttpRequest, JsonResponse, HttpResponse
-from django.views import View
+from rest_framework.views import APIView
+from rest_framework import generics
+
 from django.contrib.auth import authenticate
-from django.shortcuts import render, redirect
-
-from response.exceptions import UnAuthorizedException, UnProcessableException
-from response.validator import ResponseValidator
-
-from .auth.jwt_ import JWT
-from .forms import LoginForm, RegisterForm
-from .models import User, RefreshToken
-from response.validator import ResponseValidator
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.response import Response
+from rest_framework.request import Request
 
 
-class RegisterView(View):
-    def get(self, request: HttpRequest) -> HttpResponse:
-        form = RegisterForm()
-        return render(request, "register.html", {"form": form})
-
-    def post(self, request: HttpRequest) -> HttpResponse | HttpResponse:
-        form = RegisterForm(request.POST)
-        if form.is_valid():
-            data = form.cleaned_data
-            User.objects.create_user(**data)  # type: ignore
-            return redirect("/user/login")
-        else:
-            return render(
-                request, "register.html", {"form": form}, status=201
-            )  # 에러를 포함해 재 렌더링
+# from response.exceptions import UnAuthorizedException, UnProcessableException
+from serializers.user_serializer import LoginSerializer, RegisterSerializer
 
 
-class RefreshView(View):
-    def post(self, request: HttpRequest) -> ResponseValidator:
-        body = json.loads(request.body)
-        access_token = body["access_token"]
-        response = ResponseValidator(message="Success", status=201)
-
-        if not access_token:
-            raise UnProcessableException
-
-        jwt = JWT()
-        if payload := jwt.decode(access_token, verify_exp=False):
-            new_token = jwt.encode({"id": payload.id, "is_refresh": False})
-            response.data = {"access_token": new_token}
-            return response
-        else:
-            raise UnAuthorizedException
+from auth.jwt_ import JWT
+from .models import RefreshToken
 
 
-class LoginView(View):
-    def get(self, request: HttpRequest) -> HttpResponse:
-        form = LoginForm()
-        return render(request, "login.html", {"form": form})
+class RegisterView(generics.CreateAPIView):
+    serializer_class = RegisterSerializer
 
-    def post(self, reqeust: HttpRequest) -> ResponseValidator:
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(status=201, data=serializer.data)
+
+
+# class RefreshView(View):
+#     def post(self, request: HttpRequest) -> ResponseValidator:
+#         body = json.loads(request.body)
+#         access_token = body["access_token"]
+#         response = ResponseValidator(message="Success", status=201)
+
+#         if not access_token:
+#             raise UnProcessableException
+
+#         jwt = JWT()
+#         if payload := jwt.decode(access_token, verify_exp=False):
+#             new_token = jwt.encode({"id": payload.id, "is_refresh": False})
+#             response.data = {"access_token": new_token}
+#             return response
+#         else:
+#             raise UnAuthorizedException
+
+
+class LoginView(generics.CreateAPIView):
+    serializer_class = LoginSerializer
+
+    def create(self, request: Request) -> Response:
         """
         포스트 API로 리퀘스트에서 인증 정보를 추출해 확인하고 이를 토대로 jwt 토큰을 발급합니다.
 
@@ -63,20 +56,17 @@ class LoginView(View):
         Returns:
             JsonResponse: jwt 토큰
         """
-        form = LoginForm(reqeust.POST)
-        response = ResponseValidator(message="Success", status=201)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)  # 유효성 검사
 
-        if not form.is_valid():
-            raise UnProcessableException  # form을 또 사용할지 모르겠음
-
-        data = form.cleaned_data
+        data = serializer.data
         email, password = (
-            data["email"],
-            data["password"],
-        )  # 딕셔너리를 통해서 접근하는거 강인한 DTO가 아님.
+            data.get("email"),
+            data.get("password"),
+        )
 
         if not (user := authenticate(username=email, password=password)):
-            raise UnAuthorizedException
+            raise AuthenticationFailed
 
         access_token = JWT().encode(payload={"id": user.pk, "is_refresh": False})
         refresh_token = JWT().encode(payload={"id": user.pk, "is_refresh": True})
@@ -89,5 +79,5 @@ class LoginView(View):
             "access_token": access_token,
             "refresh_token": refresh_token,
         }
-        response.data = data
+        response = Response(status=200, data=data)
         return response
