@@ -1,10 +1,8 @@
 from rest_framework.authentication import BaseAuthentication
-from response.exceptions import UnAuthorizedException
 from rest_framework.exceptions import AuthenticationFailed
 
 from user.models import User
-import jwt
-from .jwt_ import JWT
+from .jwt_ import JWT, jwt
 
 
 class JWTAuthenicator(BaseAuthentication):
@@ -31,10 +29,10 @@ class JWTAuthenicator(BaseAuthentication):
             return (user, None)
 
         except jwt.ExpiredSignatureError:
-            raise UnAuthorizedException("Expired token")
+            raise AuthenticationFailed("Expired token")
 
         except jwt.InvalidTokenError:
             raise AuthenticationFailed("Invalid token")
 
-    def authenticate_header(self, request):
-        return "Bearer"
+    # def authenticate_header(self, request):
+    # return "Bearer"
