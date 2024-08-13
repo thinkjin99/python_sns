@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "post",
     "user",
+    "rest_framework",
 ]
 
 
@@ -54,7 +55,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "response_middleware.JSONResponseMiddleWare",
 ]
 
 ROOT_URLCONF = "blog.urls"
@@ -133,3 +133,12 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.BasicAuthentication",
+        # "auth.authenicator.JWTAuthenicator",  # 커스텀 인증기 경로
+        # 다른 인증기 클래스들을 추가할 수 있습니다.
+    ],
+}
