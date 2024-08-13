@@ -1,16 +1,14 @@
-from rest_framework.views import APIView
-from rest_framework import generics
-
 from django.contrib.auth import authenticate
+from rest_framework import generics
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.response import Response
 from rest_framework.request import Request
 
-
-# from response.exceptions import UnAuthorizedException, UnProcessableException
-from serializers.user_serializer import LoginSerializer, RegisterSerializer
-
-
+from serializers.user_serializer import (
+    LoginSerializer,
+    RegisterSerializer,
+    RefreshTokenSerializer,
+)
 from auth.jwt_ import JWT
 from .models import RefreshToken
 
@@ -25,22 +23,21 @@ class RegisterView(generics.CreateAPIView):
         return Response(status=201, data=serializer.data)
 
 
-# class RefreshView(View):
-#     def post(self, request: HttpRequest) -> ResponseValidator:
-#         body = json.loads(request.body)
-#         access_token = body["access_token"]
-#         response = ResponseValidator(message="Success", status=201)
+class RefreshTokenView(generics.CreateAPIView):
+    serializer_class = RefreshTokenSerializer
 
-#         if not access_token:
-#             raise UnProcessableException
-
-#         jwt = JWT()
-#         if payload := jwt.decode(access_token, verify_exp=False):
-#             new_token = jwt.encode({"id": payload.id, "is_refresh": False})
-#             response.data = {"access_token": new_token}
-#             return response
-#         else:
-#             raise UnAuthorizedException
+    def create(self, request: Request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.data
+        user: int = data.get("user")
+        token: str = data.get("token")
+        refresh_token = RefreshToken.objects.filter(user_id=user, token=token)
+        if refresh_token:
+            access_token = JWT.encode(payload={"id": user, "is_refresh": False})
+            return Response(status=201, data={"access_token": access_token})
+        else:
+            raise AuthenticationFailed
 
 
 class LoginView(generics.CreateAPIView):
