@@ -50,6 +50,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class RefreshToken(models.Model):
     user = models.ForeignKey(User, related_name="token", on_delete=models.CASCADE)
-    token = models.CharField(max_length=300, null=False)
+    token = models.CharField(max_length=100, null=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
