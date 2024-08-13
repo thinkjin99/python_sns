@@ -1,25 +1,14 @@
 import jwt
-import pathlib
 import datetime
 
 
 from .validator import PayloadValidator
 
 
-PATH = pathlib.Path("/Users/jin/Programming/blog/blog/user")
-
-
-def read_pem_key(path: str | pathlib.Path) -> str:
-    with open(path) as f:
-        secret = f.read(2048)
-        return secret
-
-
 class JWT:
-    # def __init__(self) -> None:
     algorithm = "HS256"
-    # self.public = read_pem_key(PATH.joinpath("public_key.pem"))
-    secret = read_pem_key(PATH.joinpath("private_key.pem"))
+    secret = "kqxO+8QJcYPJuxshiZWHl1kVA+cLoGBA8TAtzYnmxe8="
+    refresh_secret = "U83dtMRxSB2BjC0LVQgDiAsOqmVeUaKN3MpcbeSSEdc="
 
     @classmethod
     def encode(cls, payload: dict) -> str:
@@ -36,18 +25,22 @@ class JWT:
 
         if payload.get("is_refresh"):
             exp = create_exp(datetime.timedelta(days=60))
+            secret = cls.refresh_secret
         else:
             exp = create_exp(datetime.timedelta(hours=3))
+            secret = cls.secret
 
         payload.update({"exp": exp})
         payload_ = PayloadValidator(**payload)  # 원본 딕셔너리 수정에 위험이 있으므로
         token = jwt.encode(
-            payload=payload_.model_dump(), key=cls.secret, algorithm=cls.algorithm
+            payload=payload_.model_dump(), key=secret, algorithm=cls.algorithm
         )
         return token
 
     @classmethod
-    def decode(cls, token: str, verify_exp: bool = True) -> PayloadValidator:
+    def decode(
+        cls, token: str, verify_exp: bool = True, is_refresh: bool = False
+    ) -> PayloadValidator:
         """
         JWT 토큰 디코딩
 
@@ -57,9 +50,11 @@ class JWT:
         Returns:
             dict | None: 토큰의 페이로드
         """
+
+        secret = cls.refresh_secret if is_refresh else cls.secret
         data: dict = jwt.decode(
             token,
-            cls.secret,
+            secret,
             algorithms=[cls.algorithm],
             options={"verify_exp": verify_exp},
         )
