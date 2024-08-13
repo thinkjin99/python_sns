@@ -29,11 +29,11 @@ def jwt_token(user) -> str:
         data=data,
     )
     # logging.info(f"header: {response.headers} data: {response.json()}")
-    assert response.status_code == 201
+    assert response.status_code == 200
 
-    data = response.json()["data"]
-    jwt_token = data.get("access_token")
-    return jwt_token
+    data = response.json()
+    
+    return data
 
 
 @pytest.fixture
