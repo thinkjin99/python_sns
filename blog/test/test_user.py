@@ -4,7 +4,7 @@ import pytest
 from django.test import Client
 from django.urls import reverse
 
-from .fixtures import user, jwt_token
+from .fixtures import user, login_result
 from user.models import User
 
 logger = logging.getLogger("test")
@@ -33,9 +33,9 @@ class TestUser:
         logging.info(f"header: {response.headers} data: {response.json()}")
         assert response.status_code == 200
 
-    def test_refresh(self, jwt_token):
+    def test_refresh(self, login_result):
         url = reverse("user:refresh")
-        refresh_token = jwt_token["refresh_token"]
+        refresh_token = login_result["refresh_token"]
         data = {"token": refresh_token}
         client = Client()
 

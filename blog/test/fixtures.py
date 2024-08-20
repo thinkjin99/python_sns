@@ -20,7 +20,7 @@ def user() -> dict:
 
 
 @pytest.fixture
-def jwt_token(user) -> str:
+def login_result(user) -> str:
     url = reverse("user:login")
     data = {"email": TEST_USER_ID, "password": TEST_USER_PASSWORD}
     client = Client()
@@ -32,7 +32,7 @@ def jwt_token(user) -> str:
     assert response.status_code == 200
 
     data = response.json()
-    
+
     return data
 
 
@@ -55,7 +55,7 @@ def posts() -> list:
         "author_id": TEST_USER_DB_ID,
     }
     posts = []
-    for i in range(10):
+    for i in range(20):
         copy = post_data.copy()
         copy["content"] = f"나는 손범수 {i}"
         post = Post.objects.create(**copy)
