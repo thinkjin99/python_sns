@@ -4,7 +4,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.response import Response
 from rest_framework.request import Request
 
-from serializers.user_serializer import (
+from .serializers import (
     LoginSerializer,
     RegisterSerializer,
     RefreshTokenSerializer,
