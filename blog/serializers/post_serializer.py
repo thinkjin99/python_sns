@@ -9,6 +9,16 @@ class PostSerializer(serializers.ModelSerializer):
         fields = ["id", "title", "content", "author"]
 
     id = serializers.IntegerField(read_only=True)
-    title = serializers.CharField(max_length=50)
-    content = serializers.CharField(max_length=500)
-    author = serializers.PrimaryKeyRelatedField(read_only=True, queryset=User)
+    title = serializers.CharField(max_length=50, required=True)
+    content = serializers.CharField(max_length=500, required=True)
+    author = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), required=True
+    )
+
+    # def validate_author(self, value):
+    #     try:
+    #         user = User.objects.get(id=value)
+    #         return value
+
+    #     except User.DoesNotExist as e:
+    #         raise serializers.ValidationError("User is not exists")
