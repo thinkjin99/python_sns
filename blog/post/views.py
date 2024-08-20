@@ -5,7 +5,7 @@ from rest_framework.pagination import PageNumberPagination
 
 
 from .models import Post
-from serializers.post_serializer import PostSerializer
+from .serializers import PostSerializer
 from auth.authenicator import JWTAuthenicator
 
 
