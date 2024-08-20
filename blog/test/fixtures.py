@@ -44,7 +44,14 @@ def post() -> dict:
         "author_id": TEST_USER_DB_ID,
     }
     post = Post.objects.create(**post_data)
-    return post.to_dict()
+    return {
+        "id": post.id,
+        "title": post.title,
+        "content": post.content,
+        "author": post.author_id,
+        "created_at": post.created_at,
+        "updated_at": post.updated_at,
+    }
 
 
 @pytest.fixture
