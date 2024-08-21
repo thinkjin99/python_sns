@@ -1,9 +1,3 @@
-from rest_framework import viewsets
-from rest_framework.response import Response
-from rest_framework.exceptions import PermissionDenied
-from rest_framework.pagination import PageNumberPagination
-
-
 from .models import Post
 from .serializers import PostSerializer
 from auth.authenicator import JWTAuthenicator
@@ -36,3 +30,4 @@ class PostViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data, status=200)
+
