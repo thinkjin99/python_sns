@@ -16,6 +16,7 @@ django-debug-toolbar = "^4.4.6"
 pydantic = "^2.8.2"
 pyjwt = "^2.8.0"
 cryptography = "^42.0.8"
+django-filter = "^24.3"
 
 
 [build-system]
