@@ -8,19 +8,20 @@ from post.models import Post
 
 TEST_USER_ID = "abc@naver.com"
 TEST_USER_PASSWORD = "a123"
+TEST_PROFILE_ID = "Test"
 TEST_USER_DB_ID = 1
 
 
 @pytest.fixture
-def user() -> dict:
-    data = {"email": "abc@naver.com", "password": "a123", "profile_id": "a123"}
+def login_token() -> str:
+    data = {
+        "email": TEST_USER_ID,
+        "password": TEST_USER_PASSWORD,
+        "profile_id": TEST_PROFILE_ID,
+    }
     user = User.objects.create_user(**data)
     user.follows.add(user)
-    return data
 
-
-@pytest.fixture
-def jwt_token(user) -> str:
     url = reverse("user:login")
     data = {"email": TEST_USER_ID, "password": TEST_USER_PASSWORD}
     client = Client()
@@ -29,11 +30,11 @@ def jwt_token(user) -> str:
         data=data,
     )
     # logging.info(f"header: {response.headers} data: {response.json()}")
-    assert response.status_code == 201
+    assert response.status_code == 200
 
-    data = response.json()["data"]
-    jwt_token = data.get("access_token")
-    return jwt_token
+    data = response.json()
+
+    return data
 
 
 @pytest.fixture
@@ -44,7 +45,14 @@ def post() -> dict:
         "author_id": TEST_USER_DB_ID,
     }
     post = Post.objects.create(**post_data)
-    return post.to_dict()
+    return {
+        "id": post.id,
+        "title": post.title,
+        "content": post.content,
+        "author": post.author_id,
+        "created_at": post.created_at,
+        "updated_at": post.updated_at,
+    }
 
 
 @pytest.fixture
@@ -55,7 +63,7 @@ def posts() -> list:
         "author_id": TEST_USER_DB_ID,
     }
     posts = []
-    for i in range(10):
+    for i in range(20):
         copy = post_data.copy()
         copy["content"] = f"나는 손범수 {i}"
         post = Post.objects.create(**copy)

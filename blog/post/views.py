@@ -1,91 +1,33 @@
-import json
-
-from django.http import HttpRequest
-from user.auth.auth_mixin import JWTRequiredView
-from response.validator import ResponseValidator
-from response.exceptions import (
-    UnProcessableException,
-    NotFoundException,
-    UnAuthorizedException,
-)
-
 from .models import Post
-from .validator import PostValidator
-from .selectors.post_selector import get_following_post_by_page
+from .serializers import PostSerializer
+from auth.authenicator import JWTAuthenicator
+from permissions.author import IsAuthorOrReadOnly
 
 
-# def json_api(func):
-#     def wraaper(*args, **kwargs):
-#         response = ResponseValidator(message="success", status=200)
-#         status, data = func(*args, **kwargs)
-#         response.status = status
-#         response.data = data
-#         return response
-
-#     return wraaper
+class PostPagination(PageNumberPagination):
+    page_size = 5
+    # page_query_param = "page_num"
 
 
-class PostView(JWTRequiredView):
-    def get(self, request: HttpRequest, post_id: int) -> ResponseValidator:
-        try:
-            post = Post.objects.get(id=post_id)
-            response = ResponseValidator.success(data=post.to_dict())
-            return response
+class PostViewSet(viewsets.ModelViewSet):
+    authentication_classes = [JWTAuthenicator]
+    permission_classes = [IsAuthorOrReadOnly]
+    serializer_class = PostSerializer
+    queryset = Post.objects.all()
+    pagination_class = PostPagination
 
-        except Post.DoesNotExist:
-            raise NotFoundException
+    def create(self, request, *args, **kwargs):
+        request.data["author"] = request.user.id  # 인증 유저 아이디 추가
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=201)
 
-    def post(self, request: HttpRequest) -> ResponseValidator:
-        try:
-            body = json.loads(request.body)
-            body.update({"author_id": self.payload.id})  # update user id
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        request.data["author"] = request.user.id  # 인증 유저 아이디 추가
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data, status=200)
 
-            post_data = PostValidator(**body).model_dump()
-            post = Post.objects.create(**post_data)
-            response = ResponseValidator.created(data=post.to_dict())
-            return response
-
-        except (json.JSONDecodeError, ValueError):
-            raise UnProcessableException
-
-    def put(self, request: HttpRequest, post_id: int) -> ResponseValidator:
-        try:
-            post = Post.objects.get(id=post_id)
-            if self.payload.id != post.author_id:
-                raise UnAuthorizedException
-
-            body = json.loads(request.body)
-            body.update({"author_id": self.payload.id})  # update user id
-
-            post_data = PostValidator(**body).model_dump()
-            Post.objects.filter(id=post_id).update(**post_data)
-            response = ResponseValidator.created(data=post_data)
-            return response
-
-        except Post.DoesNotExist:
-            raise NotFoundException
-
-    def delete(self, request: HttpRequest, post_id: int) -> ResponseValidator:
-        try:
-            post = Post.objects.get(id=post_id)
-            if self.payload.id != post.author_id:
-                raise UnAuthorizedException
-
-            post = post.delete()
-            response = ResponseValidator.success(message="deleted", data=None)
-            return response
-
-        except Post.DoesNotExist:
-            raise NotFoundException
-
-
-class PostListView(JWTRequiredView):
-    def get(self, request: HttpRequest) -> ResponseValidator:
-        try:
-            page_num = int(request.GET["page"])
-            data = get_following_post_by_page(self.payload.id, page_num)
-            response = ResponseValidator.success(data=data)
-            return response
-
-        except ValueError:
-            raise UnProcessableException

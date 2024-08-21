@@ -31,7 +31,7 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin):
     profile_id = models.CharField(max_length=30, null=False, blank=False, unique=True)
     email = models.EmailField(max_length=40, null=False, blank=False, unique=True)
-    password = models.CharField(max_length=200, null=False)
+    password = models.CharField(max_length=80, null=False)
     is_staff = models.BooleanField(("staff status"), default=False)
     is_active = models.BooleanField(("active"), default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -50,6 +50,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class RefreshToken(models.Model):
     user = models.ForeignKey(User, related_name="token", on_delete=models.CASCADE)
-    token = models.CharField(max_length=300, null=False)
+    token = models.CharField(max_length=100, null=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
