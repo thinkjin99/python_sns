@@ -8,19 +8,20 @@ from post.models import Post
 
 TEST_USER_ID = "abc@naver.com"
 TEST_USER_PASSWORD = "a123"
+TEST_PROFILE_ID = "Test"
 TEST_USER_DB_ID = 1
 
 
 @pytest.fixture
-def user() -> dict:
-    data = {"email": "abc@naver.com", "password": "a123", "profile_id": "a123"}
+def login_token() -> str:
+    data = {
+        "email": TEST_USER_ID,
+        "password": TEST_USER_PASSWORD,
+        "profile_id": TEST_PROFILE_ID,
+    }
     user = User.objects.create_user(**data)
     user.follows.add(user)
-    return data
 
-
-@pytest.fixture
-def login_result(user) -> str:
     url = reverse("user:login")
     data = {"email": TEST_USER_ID, "password": TEST_USER_PASSWORD}
     client = Client()
