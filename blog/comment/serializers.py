@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from rest_framework.fields import CurrentUserDefault
+
 from .models import Comment
 from user.models import User
 
@@ -9,6 +11,6 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = ["id", "author", "post", "content", "created_at"]
 
     author = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), required=True
+        queryset=User.objects.all(), default=CurrentUserDefault()
     )
     cotent = serializers.CharField(max_length=100, required=True)

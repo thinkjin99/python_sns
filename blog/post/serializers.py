@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from rest_framework.fields import CurrentUserDefault
+
 from .models import Post
 from user.models import User
 
@@ -12,13 +14,5 @@ class PostSerializer(serializers.ModelSerializer):
     title = serializers.CharField(max_length=50, required=True)
     content = serializers.CharField(max_length=500, required=True)
     author = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), required=True
+        queryset=User.objects.all(), default=CurrentUserDefault()
     )
-
-    # def validate_author(self, value):
-    #     try:
-    #         user = User.objects.get(id=value)
-    #         return value
-
-    #     except User.DoesNotExist as e:
-    #         raise serializers.ValidationError("User is not exists")
