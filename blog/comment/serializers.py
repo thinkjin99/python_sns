@@ -9,6 +9,7 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ["id", "author", "post", "content", "created_at"]
+        read_only_fields = ["author", "post", "created_at"]
 
     author = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(), default=CurrentUserDefault()
