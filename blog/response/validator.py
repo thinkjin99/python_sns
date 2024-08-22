@@ -1,6 +1,17 @@
 from pydantic import BaseModel, Field
 
 
+def json_api(func):
+    def wraaper(*args, **kwargs):
+        response = ResponseValidator(message="success", status=200)
+        status, data = func(*args, **kwargs)
+        response.status = status
+        response.data = data
+        return response
+
+    return wraaper
+
+
 class ResponseValidator(BaseModel):
     message: str
     status: int = Field(default=200)

@@ -76,7 +76,7 @@ class TestPost:
             data=post_data,
             content_type="application/json",
         )
-        assert resp.status_code == 200
+        assert resp.status_code == 201
         logging.info(f"Message: {json.loads(resp.content)}")
 
     def test_delete_post(self, post):
