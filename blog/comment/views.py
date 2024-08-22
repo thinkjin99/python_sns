@@ -1,5 +1,7 @@
 from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 
 
 from .models import Comment
@@ -14,15 +16,14 @@ class CommentViewSet(viewsets.ModelViewSet):
     authentication_classes = [JWTAuthenicator]
     permission_classes = [IsAuthorOrReadOnly]
     serializer_class = CommentSerializer
-    filterset_class = CommentFilter
+    # filterset_class = CommentFilter
     queryset = Comment.objects.all()
 
-    def retrieve(self, request, *args, **kwargs):
+    @action(detail=True, methods=["GET"])
+    def post_list(self, *args, **kwargs):
+        self.lookup_field = "post_id"
         queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(
             queryset, many=True
-        )  # 쿼리셋을 집어넣었는데 유효성 검사를 할 필요는 없다
+        )  # 쿼리셋을 집어넣었는데 유효성 검사를 할 필요는 없다, 쿼리셋의 직렬화를 위해서만 사용
         return Response(serializer.data)
-
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
