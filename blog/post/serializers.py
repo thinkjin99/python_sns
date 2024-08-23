@@ -1,8 +1,6 @@
 from rest_framework import serializers
-from rest_framework.fields import CurrentUserDefault
 
 from .models import Post
-from user.models import User
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -13,10 +11,7 @@ class PostSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     title = serializers.CharField(max_length=50, required=True)
     content = serializers.CharField(max_length=500, required=True)
-    author = serializers.PrimaryKeyRelatedField(
-        read_only=True
-        # queryset=User.objects.all(), default=CurrentUserDefault()
-    )
+    author = serializers.PrimaryKeyRelatedField(read_only=True)
 
     def create(self, validated_data):
         validated_data["author"] = self.context[
