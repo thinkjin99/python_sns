@@ -12,7 +12,7 @@ urlpatterns = [
     path("", include(router.urls)),
     path(
         "comments/<int:post_id>",
-        CommentViewSet.as_view({"get": "post_list"}),
+        CommentViewSet.as_view({"get": "list_post_comments"}),
         name="post-comment",
     ),
 ]

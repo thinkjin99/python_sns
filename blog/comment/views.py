@@ -21,37 +21,30 @@ class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentGetSerializer
     queryset = Comment.objects.all()
 
-    # def get_serializer_class(self):
-    #     if self.action == "create":
-    #         return CommentCreateSerializer
-    #     elif self.action == "update":
-    #         return CommentUpdateSerializer
-    #     return self.serializer_class
+    def get_serializer_class(self):  # type: ignore
+        if self.action == "create":
+            return CommentCreateSerializer
+        elif self.action == "update" or self.action == "partial":
+            return CommentUpdateSerializer
+        return self.serializer_class
 
     @action(
         detail=True,
         methods=["GET"],
         url_path="posts/comments",
         serializer_class=CommentGetSerializer,
+        lookup_field="post_id",
     )
     def list_post_comments(self, *args, **kwargs):
-        self.lookup_field = "post_id"
+        # self.lookup_field = "post_id"
         queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(
             queryset, many=True
         )  # 쿼리셋을 집어넣었는데 유효성 검사를 할 필요는 없다, 쿼리셋의 직렬화를 위해서만 사용
         return Response(serializer.data)
 
-    def create(self, request, *args, **kwargs):
-        kwargs.setdefault("context", self.get_serializer_context())
-        serializer = CommentCreateSerializer(data=request.data, **kwargs)
-        serializer.is_valid(raise_exception=True)
-
-        self.perform_create(serializer)
-        return Response(data=serializer.data, status=201)
-
-    # def list(self, request, *args, **kwargs):
-    #     """
-    #     기본 `list` 액션을 오버라이드하여 모든 `GET` 요청을 거부할 수 있습니다.
-    #     """
-    #     raise ParseError(detail="Missing Prameter comment_id")
+    def list(self, request, *args, **kwargs):
+        """
+        기본 `list` 액션을 오버라이드하여 모든 `GET` 요청을 거부할 수 있습니다.
+        """
+        raise ParseError(detail="Missing Prameter comment_id")
