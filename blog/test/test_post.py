@@ -62,13 +62,15 @@ class TestPost:
             assert resp.status_code == 200
             logging.info(f"Message: {json.loads(resp.content)}")
 
-    def test_put_post(self, post):
+    @pytest.mark.parametrize("author_id", [1, 2])
+    def test_put_post(self, post, author_id):
         auth_header = {"Authorization": "Bearer " + self.access_token}
-        url = reverse("post-detail", kwargs={"pk": 1})
+        url = reverse("post-detail", kwargs={"pk": post.id})
         client = Client()
         post_data = {
             "title": "안녕하세요",
             "content": "나는 손범수22",
+            "author": author_id,
         }
         resp = client.put(
             path=url,
@@ -76,7 +78,7 @@ class TestPost:
             data=post_data,
             content_type="application/json",
         )
-        assert resp.status_code == 201
+        assert resp.status_code == 200
         logging.info(f"Message: {json.loads(resp.content)}")
 
     def test_delete_post(self, post):

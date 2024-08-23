@@ -91,30 +91,16 @@ class TestComment:
         assert resp.status_code == 200
         logging.info(f"Message: {json.loads(resp.content)}")
 
-    def test_put_comment(self, comment):
-        auth_header = {"Authorization": "Bearer " + self.access_token}
-        url = reverse("comment-detail", kwargs={"pk": comment.id})
-        client = Client()
-        comment_data = {"content": "나는 손범수222", "post": self.post.id}
-
-        resp = client.put(
-            path=url,
-            headers=auth_header,
-            data=comment_data,
-            content_type="application/json",
-        )
-        assert resp.status_code == 200
-        logging.info(f"Message: {json.loads(resp.content)}")
-
-    def test_put_author_id_comment(self, comment, posts: list):
+    @pytest.mark.parametrize("post_id, author_id", [(1, 1), (2, 2)])
+    def test_put_comment(self, comment, post_id, author_id):
         auth_header = {"Authorization": "Bearer " + self.access_token}
         url = reverse("comment-detail", kwargs={"pk": comment.id})
         client = Client()
         comment_data = {
-            "author": 2,
-            "content": "나는 손범수333",
-            "post": 3,
-        }  # post와 author는 수정 불가
+            "content": "나는 손범수222",
+            "post": post_id,
+            "author": author_id,
+        }
 
         resp = client.put(
             path=url,
