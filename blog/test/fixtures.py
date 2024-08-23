@@ -98,7 +98,7 @@ def comments() -> list:
     }
     comments = []
     comment = Comment()
-    for i in range(20):
+    for i in range(10):
         copy = comment_data.copy()
         copy["content"] = f"코멘트 입니다 {i}"
         comment = Comment.objects.create(**copy)
