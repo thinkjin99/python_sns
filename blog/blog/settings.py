@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "post",
     "user",
     "comment",
+    "django_extensions",
 ]
 
 
